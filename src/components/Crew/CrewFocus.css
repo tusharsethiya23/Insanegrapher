@@ -42,10 +42,14 @@
 /* Photo-shaped box that covers the screen; GSAP moves it like a camera.
    Face coordinates (%) stay locked to the photo at any screen size. */
 .crew__frame {
+  /* which part of the photo stays in view when it's wider than the screen:
+     0 = left edge, 0.5 = centre, 1 = right edge */
+  --anchor-x: 0.5;
+
   position: absolute;
   width: max(100cqw, 100cqh * var(--ratio));
   aspect-ratio: var(--ratio);
-  left: calc((100cqw - max(100cqw, 100cqh * var(--ratio))) / 2);
+  left: calc((100cqw - max(100cqw, 100cqh * var(--ratio))) * var(--anchor-x));
   top: calc((100cqh - max(100cqh, 100cqw / var(--ratio))) / 2);
   transform-origin: 0 0;
   will-change: transform;
@@ -331,6 +335,11 @@
 
 /* ---------- 5. Mobile / reduced motion ---------- */
 @media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  /* the photo is much wider than a phone: keep the left side (Gourav) in view */
+  .crew__frame {
+    --anchor-x: 0;
+  }
+
   /* below the REC / timecode row so they don't collide */
   .crew__hud {
     top: calc(var(--crew-inset) + 44px);
