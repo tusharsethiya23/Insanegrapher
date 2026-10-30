@@ -286,29 +286,39 @@
   100% { transform: translateY(100%); }
 }
 
-/* ---------- 6. Mobile: copy stacked ABOVE the lens ---------- */
+/* ---------- 6. Mobile: copy centred in the middle of the screen ---------- */
+/* (the lens sits lower, at ~75% of the height, so the middle stays clear of it) */
 @media (max-width: 767px), (max-aspect-ratio: 3/4) {
   .hero__copy {
     left: 20px;
     right: 20px;
-    bottom: auto;
-    justify-content: flex-start;
-    padding-top: clamp(40px, 6cqh, 96px);
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 6cqh; /* optical centre: a touch above the middle */
+    text-align: center;
   }
 
-  /* sized to sit on the wall, clear of the face in the mobile crop */
   .hero__name {
-    font-size: clamp(44px, 13cqw, 96px);
+    font-size: clamp(52px, 17cqw, 120px);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
   }
 
   .hero__title {
-    margin-top: 1.2em;
+    margin-top: 1.1em;
     letter-spacing: 0.24em;
+    color: var(--hero-ink);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
   }
 
-  /* Light wall at the top of the mobile crop → scrim from the top instead */
+  /* His light shirt is behind the text here → a soft dark band for contrast */
   .hero__scrim {
-    background: linear-gradient(180deg, rgba(10, 10, 10, 0.7) 0%, rgba(10, 10, 10, 0) 42%);
+    background: linear-gradient(
+      180deg,
+      rgba(10, 10, 10, 0) 22%,
+      rgba(10, 10, 10, 0.55) 38%,
+      rgba(10, 10, 10, 0.55) 58%,
+      rgba(10, 10, 10, 0) 70%
+    );
   }
 }
 
