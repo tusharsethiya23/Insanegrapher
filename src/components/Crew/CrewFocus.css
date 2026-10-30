@@ -253,15 +253,17 @@
 }
 
 /* ---------- Cam B: close-up monitor ---------- */
+/* Vertical centring and the slide-in live in ONE transform on purpose:
+   with `translate` + `transform` in the same rule, the CSS minifier merged
+   them and dropped the centring, pushing the card off the bottom. */
 .crew__camb {
   position: absolute;
   z-index: 5;
   right: calc(var(--crew-inset) + clamp(32px, 4vw, 60px));
-  top: 47%;
+  top: 45%;
   width: clamp(180px, 19vw, 300px);
-  translate: 0 -50%;
   opacity: 0;
-  transform: translateX(24px);
+  transform: translate(24px, -50%);
   transition:
     opacity 0.35s,
     transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -270,7 +272,7 @@
 }
 .crew__camb.is-on {
   opacity: 1;
-  transform: none;
+  transform: translate(0, -50%);
 }
 .crew.is-offframe .crew__camb {
   scale: 1.1;
@@ -364,7 +366,10 @@
     bottom: calc(var(--crew-inset) + clamp(48px, 7svh, 80px));
     right: calc(var(--crew-inset) + 8px);
     width: 34vw;
-    translate: none;
+    transform: translateX(24px);
+  }
+  .crew__camb.is-on {
+    transform: none;
   }
   .crew__camb-bar span:last-child {
     display: none;
