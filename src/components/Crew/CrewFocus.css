@@ -1,0 +1,374 @@
+/* ==================================================================
+   CREW — autofocus on a group photo
+   1. Tokens + section
+   2. Photo frame + focus mask
+   3. AF boxes
+   4. Caption, HUD, scrim
+   5. Mobile / reduced motion
+   ================================================================== */
+
+/* ---------- 1. Tokens + section ---------- */
+.crew {
+  --crew-ink: #ece9df;
+  --crew-dim: rgba(236, 233, 223, 0.65);
+  --crew-af: rgba(255, 255, 255, 0.5); /* detected face */
+  --crew-lock: #ffffff; /* focus locked */
+  --crew-inset: clamp(16px, 3vw, 40px); /* matches the viewfinder */
+  --font-display: 'Anton', 'Bebas Neue', Impact, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+
+  position: relative;
+  z-index: 6;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #0a0a0a;
+  color: var(--crew-ink);
+  font-family: var(--font-mono);
+  container-type: size;
+}
+
+.crew__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 2. Photo frame ---------- */
+/* Photo-shaped box that covers the screen; GSAP moves it like a camera.
+   Face coordinates (%) stay locked to the photo at any screen size. */
+.crew__frame {
+  position: absolute;
+  width: max(100cqw, 100cqh * var(--ratio));
+  aspect-ratio: var(--ratio);
+  left: calc((100cqw - max(100cqw, 100cqh * var(--ratio))) / 2);
+  top: calc((100cqh - max(100cqh, 100cqw / var(--ratio))) / 2);
+  transform-origin: 0 0;
+  will-change: transform;
+  container-type: inline-size; /* cqw inside = % of the photo width */
+}
+
+.crew__img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+
+/* Out of focus */
+.crew__img--soft {
+  filter: blur(6px) brightness(0.72) saturate(0.9);
+  transform: scale(1.02); /* hides the blur's soft edge */
+}
+
+/* In focus: only inside the focus circle */
+.crew__img--sharp {
+  -webkit-mask-image: radial-gradient(
+    circle at calc(var(--fx) * 1%) calc(var(--fy) * 1%),
+    #000 calc(var(--fr) * 1cqw),
+    transparent calc(var(--fr) * 1.45cqw)
+  );
+  mask-image: radial-gradient(
+    circle at calc(var(--fx) * 1%) calc(var(--fy) * 1%),
+    #000 calc(var(--fr) * 1cqw),
+    transparent calc(var(--fr) * 1.45cqw)
+  );
+}
+
+/* ---------- 3. AF boxes ---------- */
+.crew__af {
+  --c: var(--crew-af);
+  --len: 28%; /* corner bracket length */
+  --w: 1.5px;
+
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  width: calc(var(--s) * 1.3cqw);
+  aspect-ratio: 4 / 5;
+  translate: -50% -50%;
+  /* four corner brackets */
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--len) var(--w) no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / var(--w) var(--len) no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / var(--len) var(--w) no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / var(--w) var(--len) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / var(--len) var(--w) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--len) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / var(--len) var(--w) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--len) no-repeat;
+  transition: outline-color 0.2s;
+  outline: 1px solid transparent;
+}
+
+.crew__af.is-locked {
+  --c: var(--crew-lock);
+  --w: 2px;
+  outline-color: rgba(255, 255, 255, 0.35);
+  animation: crew-lock 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes crew-lock {
+  0%   { scale: 1.25; }
+  60%  { scale: 0.94; }
+  100% { scale: 1; }
+}
+
+.crew__af-tag {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 5px);
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+/* tag only on the face in focus (with all seven locked they'd overlap) */
+.crew__af.is-current .crew__af-tag,
+.crew__af.is-debug .crew__af-tag {
+  opacity: 1;
+}
+
+/* Debug: solid red boxes to check face positions */
+.crew__af.is-debug {
+  --c: #ff3b30;
+  outline-color: #ff3b30;
+}
+
+/* ---------- 4. Caption, HUD, scrim ---------- */
+.crew__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(90% 70% at 0% 100%, rgba(5, 5, 5, 0.8), transparent 60%);
+}
+
+.crew__grain {
+  z-index: 3;
+  opacity: 0.07;
+}
+
+/* The viewfinder starts hidden (other sections reveal it on scroll);
+   here it is on from the first frame */
+.crew .viewfinder {
+  visibility: visible;
+}
+
+.crew__hud {
+  position: absolute;
+  z-index: 5;
+  top: calc(var(--crew-inset) + 6px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+.crew__hud span {
+  opacity: 0.5;
+}
+
+/* Lower-third caption */
+.crew__lower {
+  position: absolute;
+  z-index: 5;
+  left: calc(var(--crew-inset) + clamp(32px, 4vw, 60px));
+  right: var(--crew-inset);
+  bottom: calc(var(--crew-inset) + clamp(48px, 7svh, 80px));
+  max-width: 560px;
+  pointer-events: none;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+}
+
+.crew__lower-inner {
+  animation: crew-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes crew-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.crew__lower-index {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--crew-dim);
+}
+
+.crew__lower-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(44px, 7vw, 112px);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.crew__lower-role {
+  margin: 12px 0 0;
+  font-size: clamp(11px, 1vw, 14px);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.crew__lower-bio {
+  max-width: 42ch;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--crew-dim);
+}
+
+/* Off frame (member not in the group photo): Cam A dims, Cam B leads */
+.crew__img {
+  transition: filter 0.4s;
+}
+.crew.is-offframe .crew__img--soft {
+  filter: blur(10px) brightness(0.4) saturate(0.7);
+}
+
+/* ---------- Cam B: close-up monitor ---------- */
+.crew__camb {
+  position: absolute;
+  z-index: 5;
+  right: calc(var(--crew-inset) + clamp(32px, 4vw, 60px));
+  top: 47%;
+  width: clamp(180px, 19vw, 300px);
+  translate: 0 -50%;
+  opacity: 0;
+  transform: translateX(24px);
+  transition:
+    opacity 0.35s,
+    transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+.crew__camb.is-on {
+  opacity: 1;
+  transform: none;
+}
+.crew.is-offframe .crew__camb {
+  scale: 1.1;
+}
+
+.crew__camb-bar,
+.crew__camb-name {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.crew__camb-bar {
+  border-radius: 4px 4px 0 0;
+}
+.crew__camb-name {
+  border-radius: 0 0 4px 4px;
+  font-weight: 700;
+  color: var(--crew-ink);
+}
+
+.crew__camb-dot {
+  color: #ff3b30;
+}
+
+.crew__camb-screen {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #000;
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.crew__camb-cut {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: crew-cut 0.18s steps(2, end); /* a hard cut with a 1-frame flash */
+}
+
+@keyframes crew-cut {
+  from {
+    filter: brightness(2.2);
+  }
+}
+
+.crew__camb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crew__camb-initial {
+  font-family: var(--font-display);
+  font-size: 96px;
+  color: var(--crew-dim);
+}
+
+/* ---------- 5. Mobile / reduced motion ---------- */
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  /* below the REC / timecode row so they don't collide */
+  .crew__hud {
+    top: calc(var(--crew-inset) + 44px);
+    font-size: 10px;
+  }
+
+  .crew__scrim {
+    background: linear-gradient(to top, rgba(5, 5, 5, 0.85), transparent 45%);
+  }
+
+  /* caption bottom-left, Cam B bottom-right beside it */
+  .crew__lower {
+    left: calc(var(--crew-inset) + 8px);
+    right: calc(var(--crew-inset) + 34vw + 20px);
+  }
+  .crew__lower-name {
+    font-size: clamp(34px, 10vw, 52px);
+  }
+
+  .crew__camb {
+    top: auto;
+    bottom: calc(var(--crew-inset) + clamp(48px, 7svh, 80px));
+    right: calc(var(--crew-inset) + 8px);
+    width: 34vw;
+    translate: none;
+  }
+  .crew__camb-bar span:last-child {
+    display: none;
+  }
+  .crew.is-offframe .crew__camb {
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crew__af.is-locked,
+  .crew__lower-inner,
+  .crew__camb-cut {
+    animation: none;
+  }
+}

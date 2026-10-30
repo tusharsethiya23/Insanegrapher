@@ -1,0 +1,128 @@
+.viewfinder {
+  --vf-ink: rgba(255, 255, 255, 0.92);
+  --vf-line: rgba(255, 255, 255, 0.35);
+  --vf-rec: var(--hero-rec, #ff3b30);
+  --vf-inset: clamp(16px, 3vw, 40px);
+  --vf-corner: clamp(22px, 3.2vw, 48px);
+
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  visibility: hidden; /* revealed by the Hero scroll timeline */
+  color: var(--vf-ink);
+  font-family: var(--hero-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: clamp(10px, 0.9vw, 13px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Corner brackets ---- */
+.viewfinder__corner {
+  position: absolute;
+  width: var(--vf-corner);
+  height: var(--vf-corner);
+  border: 0 solid var(--vf-ink);
+}
+.viewfinder__corner--tl { top: var(--vf-inset);    left: var(--vf-inset);  border-top-width: 2px;    border-left-width: 2px; }
+.viewfinder__corner--tr { top: var(--vf-inset);    right: var(--vf-inset); border-top-width: 2px;    border-right-width: 2px; }
+.viewfinder__corner--bl { bottom: var(--vf-inset); left: var(--vf-inset);  border-bottom-width: 2px; border-left-width: 2px; }
+.viewfinder__corner--br { bottom: var(--vf-inset); right: var(--vf-inset); border-bottom-width: 2px; border-right-width: 2px; }
+
+/* ---- Frame guides + centre cross ---- */
+.viewfinder__guide {
+  position: absolute;
+}
+
+/* 2.39:1 letterbox lines */
+.viewfinder__guide--scope {
+  top: 50%;
+  left: 8%;
+  right: 8%;
+  aspect-ratio: 2.39 / 1;
+  translate: 0 -50%;
+  border-top: 1px dashed var(--vf-line);
+  border-bottom: 1px dashed var(--vf-line);
+}
+
+/* 9:16 reel frame: traces the edges of the centred vertical video */
+.viewfinder__guide--reel {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  aspect-ratio: 9 / 16;
+  translate: -50% 0;
+  border-left: 1px dashed var(--vf-line);
+  border-right: 1px dashed var(--vf-line);
+}
+
+.viewfinder__cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  translate: -50% -50%;
+  background:
+    linear-gradient(var(--vf-line), var(--vf-line)) center / 100% 1px no-repeat,
+    linear-gradient(var(--vf-line), var(--vf-line)) center / 1px 100% no-repeat;
+}
+
+/* ---- Readouts ---- */
+.viewfinder__row {
+  position: absolute;
+  /* readouts sit between the brackets */
+  left: calc(var(--vf-inset) + var(--vf-corner) + 10px);
+  right: calc(var(--vf-inset) + var(--vf-corner) + 10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.viewfinder__row--top    { top: calc(var(--vf-inset) + 6px); }
+.viewfinder__row--bottom { bottom: calc(var(--vf-inset) + 6px); }
+
+.viewfinder__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.viewfinder__rec-dot {
+  color: var(--vf-rec);
+}
+
+.viewfinder__tc {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.viewfinder__sound {
+  pointer-events: auto;
+  min-height: 32px;
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--vf-line);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.viewfinder__sound:hover,
+.viewfinder__sound[aria-pressed='true'] {
+  border-color: var(--vf-ink);
+}
+.viewfinder__sound:focus-visible {
+  outline: 2px solid var(--vf-ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  /* frame guides are a sliver on portrait screens */
+  .viewfinder__guide {
+    display: none;
+  }
+}

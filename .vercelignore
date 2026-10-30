@@ -1,0 +1,4 @@
+# Vercel uploads the source and builds it in the cloud; skip what it doesn't need
+node_modules
+dist
+source-footage

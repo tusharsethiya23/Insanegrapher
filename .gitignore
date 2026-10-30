@@ -1,0 +1,14 @@
+# dependencies + build output (Vercel/Netlify rebuild these)
+node_modules
+dist
+
+# original camera/export files — large, not used by the site
+source-footage
+
+# local / editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea

@@ -1,0 +1,711 @@
+/* ==================================================================
+   EDIT TIMELINE (work section)
+   1. Tokens
+   2. Section + hand-off positioning
+   3. Layout: top bar, inspector, monitor slot
+   4. Program monitor
+   5. Timeline: heads, lanes, ruler, tracks, clips, playhead
+   6. Mobile
+   ================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+.edit {
+  --nle-bg: #0b0b0b;
+  --nle-panel: #121212;
+  --nle-panel-2: #181818;
+  --nle-line: #262626;
+  --nle-ink: #ece9df;
+  --nle-dim: rgba(236, 233, 223, 0.55);
+  --nle-faint: rgba(236, 233, 223, 0.28);
+  --nle-red: #ff3b30;
+  --nle-audio: #3fae8c;
+  --nle-title: #8b6fd6;
+  --font-display: 'Anton', 'Bebas Neue', Impact, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+
+  /* timeline scale: pixels per second of footage */
+  --pps: clamp(7px, 0.95vw, 16px);
+
+  /* track heights */
+  --row-ruler: 24px;
+  --row-v2: 20px;
+  --row-v1: clamp(64px, 10svh, 92px);
+  --row-a1: clamp(30px, 5svh, 44px);
+  --row-a2: 20px;
+  --row-gap: 4px;
+}
+
+/* ---------- 2. Section ---------- */
+.edit {
+  position: relative;
+  z-index: 5;
+  height: 100vh;
+  height: 100svh;
+  /* Pull the section up by one screen so it starts exactly where the hero's
+     pin ends; it stays invisible until that moment (see show/hide in JSX). */
+  margin-top: -100vh;
+  margin-top: -100svh;
+  visibility: hidden;
+  overflow: hidden;
+  background: var(--nle-bg);
+  color: var(--nle-ink);
+  font-family: var(--font-mono);
+}
+
+.edit__grain {
+  z-index: 4;
+  opacity: 0.05;
+}
+
+/* ---------- 3. Layout ---------- */
+.edit__ui {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 14px clamp(12px, 2vw, 28px) 16px;
+}
+
+.edit__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nle-dim);
+}
+
+.edit__seq {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--nle-ink);
+  font-weight: 700;
+}
+
+.edit__seq-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nle-red);
+}
+
+.edit__btn,
+.edit__open {
+  min-height: 32px;
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--nle-line);
+  border-radius: 3px;
+  background: var(--nle-panel-2);
+  color: var(--nle-ink);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.edit__btn:hover,
+.edit__btn[aria-pressed='true'],
+.edit__open:hover {
+  border-color: var(--nle-ink);
+}
+.edit__btn:focus-visible,
+.edit__open:focus-visible,
+.edit__clip:focus-visible {
+  outline: 2px solid var(--nle-ink);
+  outline-offset: 2px;
+}
+
+/* inspector | 16:9 monitor | bin */
+.edit__main {
+  display: grid;
+  grid-template-columns: minmax(240px, 24%) minmax(0, 1fr) minmax(180px, 17%);
+  gap: 12px;
+  min-height: 0;
+}
+
+/* Inspector */
+.edit__inspector {
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(16px, 2vw, 28px);
+  border: 1px solid var(--nle-line);
+  border-radius: 6px;
+  background: var(--nle-panel);
+}
+
+.edit__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: edit-meta-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes edit-meta-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.edit__meta-index {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nle-dim);
+}
+
+.edit__chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.edit__meta-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 3.6vw, 64px);
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.edit__meta-type {
+  margin: -6px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nle-dim);
+}
+
+.edit__facts {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--nle-line);
+  font-size: 12px;
+}
+.edit__facts div {
+  display: grid;
+  grid-template-columns: 9ch 1fr;
+  gap: 12px;
+}
+.edit__facts dt {
+  color: var(--nle-faint);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.edit__facts dd {
+  margin: 0;
+}
+
+.edit__meta-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--nle-dim);
+}
+
+.edit__open {
+  align-self: flex-start;
+  margin-top: 4px;
+  background: var(--nle-ink);
+  border-color: var(--nle-ink);
+  color: #0a0a0a;
+  font-weight: 700;
+}
+.edit__open:hover {
+  background: #fff;
+}
+
+/* Where the monitor lands: the largest 16:9 box that fits the area.
+   (cq units must be used on a CHILD of the container — on the container's
+   own properties they'd resolve against the viewport.) */
+.edit__monitor-area {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  container-type: size;
+}
+
+.edit__monitor-slot {
+  width: min(100cqw, 100cqh * 16 / 9);
+  aspect-ratio: 16 / 9;
+}
+
+/* Bin: project cards */
+.edit__bin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+  border: 1px solid var(--nle-line);
+  border-radius: 6px;
+  background: var(--nle-panel);
+}
+
+.edit__panel-label {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nle-dim);
+}
+
+.edit__bin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.edit__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.edit__card-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  outline: 1px solid var(--nle-line);
+  transition: outline-color 0.2s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  container-type: inline-size;
+}
+.edit__card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit__card:hover .edit__card-media {
+  transform: translateY(-3px);
+  outline-color: var(--nle-faint);
+}
+.edit__card.is-active .edit__card-media {
+  outline: 2px solid var(--nle-ink);
+}
+.edit__card:focus-visible {
+  outline: none;
+}
+.edit__card:focus-visible .edit__card-media {
+  outline: 2px solid var(--nle-ink);
+  outline-offset: 2px;
+}
+
+.edit__card-dur {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.edit__card-title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.edit__card-type {
+  margin-top: -2px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--nle-dim);
+}
+
+/* ---------- 4. Program monitor ---------- */
+/* Absolutely positioned in the section; GSAP animates it from fullscreen
+   into the slot's measured rect. */
+.edit__monitor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
+}
+
+.edit__media {
+  position: absolute;
+  inset: 0;
+  visibility: hidden; /* hard cuts: no crossfade */
+}
+/* `inherit`, not `visible`: a visible child would show through the section
+   while the section itself is still hidden before the hand-off */
+.edit__media.is-active {
+  visibility: inherit;
+}
+
+.edit__media-el {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Generated stand-in while a project has no media */
+.edit__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  text-align: center;
+  background:
+    radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--c) 85%, white 10%), transparent 60%),
+    radial-gradient(90% 80% at 85% 90%, color-mix(in srgb, var(--c) 60%, black), transparent 70%),
+    #0c0c0c;
+}
+.edit__placeholder-title {
+  padding: 0 8%;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 8cqw, 110px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: #fff;
+}
+.edit__placeholder-note {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+.edit__monitor {
+  container-type: size;
+}
+
+.edit__monitor-hud {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.edit__monitor-file {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 5. Timeline ---------- */
+.edit__timeline {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  border: 1px solid var(--nle-line);
+  border-radius: 6px;
+  background: var(--nle-panel);
+  overflow: hidden;
+}
+
+.edit__heads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  padding: 6px 0;
+  border-right: 1px solid var(--nle-line);
+  background: var(--nle-panel-2);
+}
+
+.edit__head {
+  display: grid;
+  place-items: center;
+  height: var(--row-v2);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nle-dim);
+}
+.edit__head--ruler { height: var(--row-ruler); }
+.edit__head--v1    { height: var(--row-v1); }
+.edit__head--a1    { height: var(--row-a1); }
+
+/* The visible window onto the tracks. overflow: clip (not hidden) so focusing
+   a clip can never scroll it out of sync with the animation. */
+.edit__lanes {
+  position: relative;
+  overflow: hidden;
+  overflow: clip;
+  padding: 6px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.edit__tracks {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  width: calc(var(--total) * var(--pps));
+  will-change: transform;
+}
+
+.edit__row {
+  position: relative;
+  height: var(--row-v2);
+}
+.edit__row--ruler { height: var(--row-ruler); }
+.edit__row--v1    { height: var(--row-v1); }
+.edit__row--a1    { height: var(--row-a1); }
+
+/* Ruler: 1s ticks + 5s major ticks, TC label every 10s */
+.edit__row--ruler {
+  border-bottom: 1px solid var(--nle-line);
+  background:
+    repeating-linear-gradient(90deg, var(--nle-faint) 0 1px, transparent 1px calc(var(--pps) * 5)) left bottom / 100% 10px no-repeat,
+    repeating-linear-gradient(90deg, var(--nle-line) 0 1px, transparent 1px var(--pps)) left bottom / 100% 5px no-repeat;
+}
+
+.edit__mark {
+  position: absolute;
+  top: 2px;
+  left: calc(var(--t) * var(--pps));
+  padding-left: 4px;
+  font-size: 9px;
+  color: var(--nle-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.edit__title-clip,
+.edit__clip,
+.edit__music {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+}
+
+.edit__title-clip {
+  left: calc(var(--start) * var(--pps));
+  width: calc(var(--dur) * var(--pps));
+  display: grid;
+  place-items: center;
+  background: var(--nle-title);
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* V1 clips = project cards (filmstrip of the poster, label bar on top) */
+.edit__clip {
+  left: calc(var(--start) * var(--pps));
+  width: calc(var(--dur) * var(--pps) - 2px); /* 2px gap reads as a cut */
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--c) 70%, black);
+  background-color: #111;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  color: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+button.edit__clip:hover {
+  filter: brightness(1.25);
+}
+
+.edit__clip.is-placeholder {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--c) 75%, white 8%), color-mix(in srgb, var(--c) 30%, black));
+}
+
+/* frame dividers every 16:9 thumbnail, like a filmstrip */
+.edit__clip::after {
+  --tile: calc(var(--row-v1) * 16 / 9);
+  content: '';
+  position: absolute;
+  inset: 16px 0 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(var(--tile) - 1px),
+    rgba(0, 0, 0, 0.45) calc(var(--tile) - 1px) var(--tile)
+  );
+}
+
+.edit__clip.is-active {
+  border-color: #fff;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+.edit__clip-label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 16px;
+  padding: 0 6px;
+  overflow: hidden;
+  background: var(--c);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.edit__clip-title {
+  position: absolute;
+  z-index: 1;
+  left: 8px;
+  bottom: 6px;
+  right: 8px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(14px, 1.3vw, 20px);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.edit__wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--nle-audio) 22%, transparent);
+  color: var(--nle-audio);
+}
+
+.edit__music {
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  background: color-mix(in srgb, var(--nle-audio) 45%, #0b0b0b);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Playhead: fixed in the middle of the lanes; the tracks move under it */
+.edit__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 3;
+  width: 2px;
+  translate: -1px 0;
+  background: var(--nle-red);
+  pointer-events: none;
+}
+.edit__playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 12px;
+  height: 14px;
+  translate: -50% 0;
+  background: var(--nle-red);
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
+}
+
+/* ---------- 6. Mobile: monitor on top, compact inspector, timeline ---------- */
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  .edit {
+    --pps: 6px;
+    --row-v1: clamp(56px, 10svh, 96px);
+    --row-a1: clamp(26px, 5svh, 44px);
+  }
+
+  .edit__ui {
+    gap: 10px;
+    padding: 12px 12px 14px;
+  }
+
+  .edit__seq-meta,
+  .edit__bin {
+    display: none;
+  }
+
+  .edit__main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  /* monitor first, full width */
+  .edit__monitor-area {
+    order: -1;
+    container-type: inline-size;
+  }
+  .edit__monitor-slot {
+    width: 100cqw;
+  }
+
+  .edit__inspector {
+    padding: 14px 16px;
+  }
+  .edit__meta {
+    gap: 10px;
+  }
+  .edit__meta-title {
+    font-size: clamp(30px, 9vw, 44px);
+  }
+  .edit__facts div:nth-child(n + 3),
+  .edit__meta-desc {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edit__meta {
+    animation: none;
+  }
+}

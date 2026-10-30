@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <title>Insanegrapher · Video Editor &amp; Videographer</title>
+    <meta name="description" content="Insanegrapher — video editor and videographer. Showreel and selected films." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Link preview (WhatsApp, Instagram, X…).
+         After deploying, replace /og-image.jpg with the FULL URL,
+         e.g. https://insanegrapher.vercel.app/og-image.jpg — most apps need an absolute URL. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Insanegrapher · Video Editor & Videographer" />
+    <meta property="og:description" content="Step through the lens: showreel, films and the crew behind every frame." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Fonts: Anton (condensed display) + JetBrains Mono (numbers / timecode) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;700&display=swap"
+    />
+
+    <!-- Start the hero photo download immediately (matches MOBILE_QUERY in breakpoints.js) -->
+    <link rel="preload" as="image" href="/assets/images/hero-desktop.webp"
+      media="(min-width: 768px) and (min-aspect-ratio: 3/4)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/assets/images/hero-mobile.webp"
+      media="(max-width: 767px), (max-aspect-ratio: 3/4)" fetchpriority="high" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

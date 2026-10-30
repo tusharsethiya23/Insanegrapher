@@ -1,0 +1,481 @@
+/* ==================================================================
+   EXPORT → CONTACT
+   1. Tokens + section
+   2. Dialog chrome (title bar)
+   3. Render: preview + progress
+   4. Form (export settings)
+   5. Done state + direct links
+   6. Mobile
+   ================================================================== */
+
+/* ---------- 1. Tokens + section ---------- */
+.export {
+  --ex-bg: #0a0a0a;
+  --ex-panel: #121212;
+  --ex-panel-2: #181818;
+  --ex-line: #262626;
+  --ex-ink: #ece9df;
+  --ex-dim: rgba(236, 233, 223, 0.55);
+  --ex-faint: rgba(236, 233, 223, 0.3);
+  --ex-red: #ff3b30;
+  --font-display: 'Anton', 'Bebas Neue', Impact, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+
+  position: relative;
+  z-index: 7;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: clamp(28px, 6vh, 72px) clamp(16px, 5vw, 96px) clamp(48px, 8vh, 96px);
+  background: var(--ex-bg);
+  color: var(--ex-ink);
+  font-family: var(--font-mono);
+}
+
+.export__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.export__intro {
+  max-width: 1280px;
+  margin: 0 auto clamp(18px, 3vh, 32px);
+}
+
+.export__kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+.export__headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(44px, 7vw, 112px);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+/* ---------- 2. Dialog chrome ---------- */
+.export__dialog {
+  max-width: 1280px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--ex-line);
+  border-radius: 8px;
+  background: var(--ex-panel);
+  box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.9);
+}
+
+.export__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ex-line);
+  background: var(--ex-panel-2);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+.export__bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--ex-ink);
+  font-weight: 700;
+}
+
+.export__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ex-red);
+}
+
+.export__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+  padding: clamp(16px, 2.5vw, 32px);
+}
+
+/* ---------- 3. Render ---------- */
+.export__render {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.export__preview {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #000;
+  outline: 1px solid var(--ex-line);
+}
+
+.export__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.85);
+}
+
+.export__preview-tc {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.export__preview-done {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: clamp(40px, 6vw, 72px);
+  animation: export-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes export-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.export__progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.export__pct {
+  font-size: clamp(22px, 2.4vw, 32px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.export__track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--ex-line);
+}
+
+.export__fill {
+  height: 100%;
+  background: var(--ex-ink);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+.export.is-ready .export__fill {
+  background: var(--ex-red);
+}
+
+.export__stats {
+  display: flex;
+  gap: 28px;
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+.export__stats div {
+  display: flex;
+  gap: 8px;
+}
+.export__stats dt {
+  color: var(--ex-faint);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.export__stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 4. Form ---------- */
+.export__fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  transition: opacity 0.4s;
+}
+/* locked until the render finishes */
+.export__fieldset:disabled {
+  opacity: 0.35;
+}
+
+.export__legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+.export__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.export__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.export__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+.export__input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--ex-line);
+  border-radius: 4px;
+  background: #0d0d0d;
+  color: var(--ex-ink);
+  font: inherit;
+  font-size: 14px;
+  color-scheme: dark; /* dark native date picker */
+}
+.export__input::placeholder {
+  color: var(--ex-faint);
+}
+.export__input:focus-visible,
+.export__chip input:focus-visible + span,
+.export__range:focus-visible,
+.export__render-btn:focus-visible,
+.export__secondary:focus-visible,
+.export__links a:focus-visible {
+  outline: 2px solid var(--ex-ink);
+  outline-offset: 2px;
+}
+.export__input:user-invalid {
+  border-color: var(--ex-red);
+}
+
+.export__textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.export__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.export__chip {
+  position: relative;
+  cursor: pointer;
+}
+.export__chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.export__chip span {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid var(--ex-line);
+  border-radius: 999px;
+  font-size: 12px;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.export__chip:hover span {
+  border-color: var(--ex-faint);
+}
+.export__chip input:checked + span {
+  border-color: var(--ex-ink);
+  background: var(--ex-ink);
+  color: #0a0a0a;
+  font-weight: 700;
+}
+
+.export__budget {
+  color: var(--ex-ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.export__range {
+  width: 100%;
+  accent-color: var(--ex-red);
+}
+
+.export__render-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 50px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ex-red);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.2s;
+}
+.export__render-btn:hover {
+  filter: brightness(1.1);
+}
+.export__render-btn:active {
+  transform: scale(0.98);
+}
+
+.export__note {
+  margin: -6px 0 0;
+  font-size: 11px;
+  color: var(--ex-faint);
+}
+
+/* ---------- 5. Done state + direct links ---------- */
+.export__done {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+.export__done-mark {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--ex-red);
+}
+.export__done-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+.export__done-text {
+  max-width: 38ch;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ex-dim);
+}
+
+.export__secondary {
+  min-height: 36px;
+  padding: 0.5em 1em;
+  border: 1px solid var(--ex-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ex-ink);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.export__direct {
+  max-width: 1280px;
+  margin: clamp(28px, 5vh, 56px) auto 0;
+}
+
+.export__direct-label {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+.export__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.export__links a {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 56px);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--ex-ink);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.export__links a:hover {
+  color: var(--ex-red);
+}
+
+.export__location {
+  margin: 16px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ex-dim);
+}
+
+/* ---------- 6. Mobile ---------- */
+@media (max-width: 860px) {
+  .export__body {
+    grid-template-columns: 1fr;
+  }
+  .export__bar-meta {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .export__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export__preview-done {
+    animation: none;
+  }
+}

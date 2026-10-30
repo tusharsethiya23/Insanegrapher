@@ -1,0 +1,408 @@
+/* ==================================================================
+   CLAPPERBOARD LOADER
+   1. Tokens        – colours, fonts, size (edit here)
+   2. Overlay       – fullscreen layer, grain, vignette, flash
+   3. Slate         – clapper sticks, hinge, board
+   4. Grid & fields – chalk lines, labels, values
+   5. HUD           – viewfinder corners, REC, sound toggle
+   6. Mobile        – stacked grid ≤ 640px
+   ================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+.loader {
+  --loader-bg: #0a0a0a;
+  --slate-board: #121212;
+  --slate-edge: #050505;
+  --chalk: #ece9df;
+  --chalk-dim: rgba(236, 233, 223, 0.55);
+  --stripe-light: #f1efe8;
+  --stripe-dark: #101010;
+  --hud: rgba(236, 233, 223, 0.6);
+  --hud-line: rgba(236, 233, 223, 0.35);
+  --rec: #ff3b30;
+  --flash: #ffffff;
+
+  --font-display: 'Anton', 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  /* Slate width. Capped by height too, because the OPEN clapper rises
+     ~0.42 × width above the slate and everything must stay in frame. */
+  --slate-w: min(60vw, 80vh);
+}
+@supports (height: 1svh) {
+  .loader {
+    --slate-w: min(60vw, 80svh);
+  }
+}
+
+/* ---------- 2. Overlay ---------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--loader-bg);
+  color: var(--chalk);
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.loader__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.loader__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 70% at 50% 50%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.55) 75%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+/* Oversized tile of SVG noise, jittered by GSAP every ~2 frames */
+.loader__grain {
+  position: absolute;
+  inset: -100px;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.09;
+  background-size: 180px 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+.loader__flash {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: var(--flash);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 3. Slate ---------- */
+.slate {
+  /* everything inside is sized in cqw = % of the slate's width, so it scales as one object */
+  container-type: inline-size;
+  --line: max(2px, 0.3cqw);
+
+  position: relative;
+  z-index: 1;
+  width: var(--slate-w);
+  /* pushes the box down so box + raised clapper is optically centred */
+  margin-top: calc(var(--slate-w) * 0.42);
+  will-change: transform;
+}
+
+.slate__sticks {
+  position: relative;
+  height: 12.8cqw;
+}
+
+.slate__stick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6.2cqw;
+  border-radius: 0.5cqw;
+  box-shadow:
+    inset 0 0 0 0.25cqw var(--stripe-dark),
+    0 0.6cqw 1.2cqw rgba(0, 0, 0, 0.5);
+}
+
+/* The moving clapper. Hinge = left end, so it pivots around its bottom-left */
+.slate__stick--top {
+  top: 0;
+  z-index: 2;
+  transform-origin: 2.4cqw 100%;
+  transform: rotate(-25deg);
+  background: repeating-linear-gradient(
+    -58deg,
+    var(--stripe-light) 0 4.2cqw,
+    var(--stripe-dark) 4.2cqw 8.4cqw
+  );
+}
+
+/* The fixed stick on top of the board — stripes mirrored, like a real slate */
+.slate__stick--bottom {
+  bottom: 0;
+  border-radius: 0.5cqw 0.5cqw 0 0;
+  background: repeating-linear-gradient(
+    58deg,
+    var(--stripe-light) 0 4.2cqw,
+    var(--stripe-dark) 4.2cqw 8.4cqw
+  );
+}
+
+.slate__hinge {
+  position: absolute;
+  z-index: 3;
+  left: 0.6cqw;
+  top: 4.4cqw;
+  width: 3.6cqw;
+  height: 3.6cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #dcdcdc, #6c6c6c 55%, #222 100%);
+  box-shadow: 0 0.2cqw 0.6cqw rgba(0, 0, 0, 0.7);
+}
+
+.slate__board {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  padding: 1.4cqw;
+  border-radius: 0 0 1cqw 1cqw;
+  /* matte black with faint chalk-dust smudges */
+  background:
+    radial-gradient(60% 50% at 28% 22%, rgba(255, 255, 255, 0.035), transparent 70%),
+    radial-gradient(50% 40% at 76% 78%, rgba(255, 255, 255, 0.025), transparent 70%),
+    var(--slate-board);
+  box-shadow:
+    0 0 0 0.35cqw var(--slate-edge),
+    0 4cqw 8cqw -2cqw rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- 4. Grid & fields ---------- */
+
+/* Each cell draws only its LEFT + TOP line; the grid is shifted up/left by one
+   line width and clipped, so only the inner dividing lines remain. */
+.slate__grid-clip {
+  height: 100%;
+  overflow: hidden;
+}
+
+.slate__grid {
+  display: grid;
+  height: calc(100% + var(--line));
+  margin: calc(var(--line) * -1) 0 0 calc(var(--line) * -1);
+  grid-template-columns: 1.1fr 1fr 1fr 1.2fr;
+  grid-template-rows: 1.15fr 1fr 1fr 1fr;
+  grid-template-areas:
+    'prod  prod  prod  prod'
+    'dir   dir   cam   cam'
+    'scene take  roll  pct'
+    'date  tc    tc    pct';
+}
+
+.slate__cell--prod  { grid-area: prod; }
+.slate__cell--dir   { grid-area: dir; }
+.slate__cell--cam   { grid-area: cam; }
+.slate__cell--scene { grid-area: scene; }
+.slate__cell--take  { grid-area: take; }
+.slate__cell--roll  { grid-area: roll; }
+.slate__cell--date  { grid-area: date; }
+.slate__cell--tc    { grid-area: tc; }
+.slate__cell--pct   { grid-area: pct; }
+
+.slate__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.6cqw;
+  min-width: 0;
+  padding: 1cqw 1.4cqw;
+}
+
+.slate__cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-left: var(--line) solid var(--chalk);
+  border-top: var(--line) solid var(--chalk);
+  opacity: 0.85;
+  filter: url(#slate-chalk);
+}
+
+.slate__label {
+  font-family: var(--font-display);
+  font-size: max(9px, 1.55cqw);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  color: var(--chalk-dim);
+  filter: url(#slate-chalk);
+}
+
+.slate__value {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-display);
+  font-size: 3.8cqw;
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.08em rgba(236, 233, 223, 0.25); /* chalk smear */
+  filter: url(#slate-chalk);
+}
+
+.slate__value--xl {
+  font-size: 6.6cqw;
+  letter-spacing: 0.05em;
+}
+
+.slate__value--mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 3.2cqw;
+  letter-spacing: 0.02em;
+}
+
+/* Values that change every frame skip the SVG filter (it would re-run each frame) */
+.slate__value--live {
+  filter: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.slate__value--pct {
+  align-self: flex-end;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 7.6cqw;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.chalk-char {
+  display: inline-block;
+  transform: translateY(var(--y)) rotate(var(--r));
+  margin-right: var(--s);
+}
+
+/* ---------- 5. HUD ---------- */
+.loader__hud {
+  position: absolute;
+  inset: clamp(16px, 3vw, 36px);
+  z-index: 4;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.85vw, 13px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hud);
+}
+
+.loader__corner {
+  position: absolute;
+  width: clamp(14px, 2vw, 28px);
+  height: clamp(14px, 2vw, 28px);
+  border: 0 solid var(--hud-line);
+}
+.loader__corner--tl { top: 0;    left: 0;  border-top-width: 1.5px;    border-left-width: 1.5px; }
+.loader__corner--tr { top: 0;    right: 0; border-top-width: 1.5px;    border-right-width: 1.5px; }
+.loader__corner--bl { bottom: 0; left: 0;  border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.loader__corner--br { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+.loader__hud-row {
+  position: absolute;
+  left: clamp(18px, 2.4vw, 36px);
+  right: clamp(18px, 2.4vw, 36px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.loader__hud-row--top    { top: clamp(10px, 1.4vw, 20px); }
+.loader__hud-row--bottom { bottom: clamp(10px, 1.4vw, 20px); }
+
+.loader__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--chalk);
+}
+.loader__rec-dot {
+  color: var(--rec);
+}
+
+.loader__sound {
+  pointer-events: auto;
+  min-height: 32px;
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--hud-line);
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.loader__sound:hover,
+.loader__sound[aria-pressed='true'] {
+  border-color: var(--chalk);
+  color: var(--chalk);
+}
+.loader__sound:focus-visible {
+  outline: 2px solid var(--chalk);
+  outline-offset: 2px;
+}
+
+/* ---------- 6. Mobile: stack the grid into a taller slate ---------- */
+@media (max-width: 640px) {
+  .loader {
+    --slate-w: min(90vw, 56vh);
+  }
+  @supports (height: 1svh) {
+    .loader {
+      --slate-w: min(90vw, 56svh);
+    }
+  }
+
+  .slate__board {
+    aspect-ratio: auto;
+    padding: 2cqw;
+  }
+
+  .slate__grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: minmax(15cqw, auto);
+    grid-template-areas:
+      'prod  prod  prod  prod  prod  prod'
+      'dir   dir   dir   dir   dir   dir'
+      'cam   cam   cam   cam   cam   cam'
+      'scene scene take  take  roll  roll'
+      'date  date  date  tc    tc    tc'
+      'pct   pct   pct   pct   pct   pct';
+  }
+
+  .slate__cell {
+    gap: 1.2cqw;
+    padding: 2cqw 2.6cqw;
+  }
+
+  .slate__label        { font-size: max(9px, 3.2cqw); }
+  .slate__value        { font-size: 6.4cqw; }
+  .slate__value--xl    { font-size: 9.5cqw; }
+  .slate__value--mono  { font-size: 4.8cqw; }
+
+  .slate__cell--pct {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+  .slate__value--pct {
+    font-size: 15cqw;
+  }
+}

@@ -1,0 +1,320 @@
+/* ==================================================================
+   HERO — "into the lens"
+   1. Tokens + active photo values (desktop / mobile)
+   2. Stage
+   3. Layers: video, photo frame, lens UI, debug marker
+   4. Atmosphere: scrim, vignette, grain
+   5. Copy + scroll hint
+   6. Mobile
+   ================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+.hero {
+  --hero-bg: #0a0a0a;
+  --hero-ink: #ece9df;
+  --hero-ink-dim: rgba(236, 233, 223, 0.7);
+  --hero-rec: #ff3b30;
+  --hero-font-display: 'Anton', 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --hero-font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, Menlo, monospace;
+
+  /* Photo/lens values arrive as --*-d / --*-m inline vars from Hero.jsx.
+     These are the ACTIVE ones: */
+  --ratio: var(--ratio-d);    /* photo width / height */
+  --lx: var(--lx-d);          /* lens centre, % of photo width */
+  --ly: var(--ly-d);          /* lens centre, % of photo height */
+  --lens-size: var(--ls-d);   /* hole diameter, % of photo width */
+}
+
+/* Same query as MOBILE_QUERY in breakpoints.js */
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  .hero {
+    --ratio: var(--ratio-m);
+    --lx: var(--lx-m);
+    --ly: var(--ly-m);
+    --lens-size: var(--ls-m);
+  }
+}
+
+/* ---------- 2. Stage ---------- */
+.hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--hero-bg);
+  color: var(--hero-ink);
+  /* children size themselves in cqw/cqh = % of the stage (scrollbar-safe) */
+  container-type: size;
+}
+
+.hero__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 3. Layers ---------- */
+
+/* Layer 1 — showreel (fit + blurred backdrop come from FitVideo.css) */
+.hero__video-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+}
+
+/* Layer 2 — photo frame.
+   Fixed aspect ratio = the photo's, sized to COVER the stage, and offset so
+   the crop is anchored on the lens (like object-position: lx% ly%).
+   → the lens sits at (lx%, ly%) of the screen on every viewport. */
+.hero__frame {
+  position: absolute;
+  z-index: 2;
+  width: max(100cqw, 100cqh * var(--ratio));
+  aspect-ratio: var(--ratio);
+  left: calc((100cqw - max(100cqw, 100cqh * var(--ratio))) * var(--lx) / 100);
+  top: calc((100cqh - max(100cqh, 100cqw / var(--ratio))) * var(--ly) / 100);
+  transform-origin: calc(var(--lx) * 1%) calc(var(--ly) * 1%);
+  container-type: inline-size; /* cqw inside = % of the photo width */
+}
+
+/* Entrance "settle" scale lives on its own wrapper so it never fights the scroll zoom */
+.hero__settle {
+  position: absolute;
+  inset: 0;
+  transform-origin: calc(var(--lx) * 1%) calc(var(--ly) * 1%);
+}
+
+.hero__settle picture,
+.hero__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__photo {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Zero-size anchor at the lens centre */
+.hero__lens-ui {
+  position: absolute;
+  left: calc(var(--lx) * 1%);
+  top: calc(var(--ly) * 1%);
+  width: 0;
+  height: 0;
+}
+
+.hero__lens-rec {
+  position: absolute;
+  left: 0;
+  /* just above the hole: radius + a small gap */
+  bottom: calc(var(--lens-size) * 0.5cqw + 14px);
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  white-space: nowrap;
+  font-family: var(--hero-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--hero-ink);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.hero__lens-rec-dot {
+  color: var(--hero-rec);
+}
+
+/* Debug: crosshair at the lens origin + circle at the lens-hole size */
+.hero__lens-marker {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--lx) * 1%);
+  top: calc(var(--ly) * 1%);
+  width: calc(var(--lens-size) * 1cqw);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 1px solid #ff3b30;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero__lens-marker::before,
+.hero__lens-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: #ff3b30;
+  translate: -50% -50%;
+}
+.hero__lens-marker::before { width: 32px; height: 1px; }
+.hero__lens-marker::after  { width: 1px;  height: 32px; }
+
+/* ---------- 4. Atmosphere ---------- */
+
+/* Darkens behind the copy for legibility; fades out with it */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0.55) 0%, rgba(10, 10, 10, 0) 50%);
+}
+
+.hero__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 75% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+.hero__grain {
+  position: absolute;
+  inset: -100px;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.08;
+  background-size: 180px 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  animation: hero-grain 0.8s steps(8) infinite;
+}
+
+@keyframes hero-grain {
+  0%   { transform: translate(0, 0); }
+  12%  { transform: translate(-40px, 25px); }
+  25%  { transform: translate(30px, -45px); }
+  37%  { transform: translate(-55px, -10px); }
+  50%  { transform: translate(20px, 50px); }
+  62%  { transform: translate(-25px, -60px); }
+  75%  { transform: translate(60px, 15px); }
+  87%  { transform: translate(-10px, 40px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ---------- 5. Copy + scroll hint ---------- */
+.hero__copy {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  left: clamp(24px, 6vw, 112px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hero__name {
+  margin: 0;
+  font-family: var(--hero-font-display);
+  font-weight: 400;
+  font-size: clamp(64px, 10.5vw, 210px);
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.hero__mask {
+  display: block;
+  overflow: hidden;
+  padding-top: 0.04em; /* keeps glyph tops from being clipped by the mask */
+}
+
+.hero__name-line {
+  display: block;
+}
+
+.hero__title {
+  margin: 1.6em 0 0;
+  font-family: var(--hero-font-mono);
+  font-size: clamp(11px, 1vw, 15px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--hero-ink-dim);
+}
+
+.hero__hint {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  bottom: clamp(20px, 4cqh, 44px);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hero__hint-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--hero-font-mono);
+  font-size: clamp(10px, 0.8vw, 12px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--hero-ink-dim);
+}
+
+/* Thin line with a light running down it */
+.hero__hint-line {
+  position: relative;
+  width: 1px;
+  height: 44px;
+  overflow: hidden;
+  background: rgba(236, 233, 223, 0.2);
+}
+.hero__hint-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hero-ink);
+  animation: hero-hint 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes hero-hint {
+  0%   { transform: translateY(-100%); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* ---------- 6. Mobile: copy stacked ABOVE the lens ---------- */
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  .hero__copy {
+    left: 20px;
+    right: 20px;
+    bottom: auto;
+    justify-content: flex-start;
+    padding-top: clamp(40px, 6cqh, 96px);
+  }
+
+  /* sized to sit on the wall, clear of the face in the mobile crop */
+  .hero__name {
+    font-size: clamp(44px, 13cqw, 96px);
+  }
+
+  .hero__title {
+    margin-top: 1.2em;
+    letter-spacing: 0.24em;
+  }
+
+  /* Light wall at the top of the mobile crop → scrim from the top instead */
+  .hero__scrim {
+    background: linear-gradient(180deg, rgba(10, 10, 10, 0.7) 0%, rgba(10, 10, 10, 0) 42%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__grain,
+  .hero__hint-line::after {
+    animation: none;
+  }
+}

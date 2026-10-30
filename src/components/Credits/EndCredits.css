@@ -1,0 +1,121 @@
+.credits {
+  --cr-ink: #ece9df;
+  --cr-dim: rgba(236, 233, 223, 0.5);
+  --cr-line: #262626;
+  --cr-red: #ff3b30;
+  --font-display: 'Anton', 'Bebas Neue', Impact, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+
+  position: relative;
+  z-index: 7;
+  padding: clamp(80px, 18vh, 200px) clamp(16px, 5vw, 96px) clamp(24px, 4vh, 40px);
+  background: #000;
+  color: var(--cr-ink);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+/* ---- The roll: role in small mono, names in condensed caps ---- */
+.credits__roll {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(56px, 12vh, 120px);
+}
+
+.credits__role {
+  margin: 0 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cr-dim);
+}
+
+.credits__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 44px);
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.credits__name--big {
+  font-size: clamp(48px, 9vw, 140px);
+  line-height: 0.95;
+}
+
+/* ---- Final card ---- */
+.credits__end {
+  margin-top: clamp(120px, 24vh, 260px);
+}
+
+.credits__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 15vw, 260px);
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.credits__socials {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 32px;
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.credits__socials a {
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cr-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--cr-dim);
+  padding-bottom: 3px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.credits__socials a:hover {
+  color: var(--cr-red);
+  border-color: var(--cr-red);
+}
+
+.credits__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: clamp(64px, 12vh, 120px);
+  padding-top: 18px;
+  border-top: 1px solid var(--cr-line);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cr-dim);
+}
+
+.credits__rewind {
+  min-height: 36px;
+  padding: 0.5em 1em;
+  border: 1px solid var(--cr-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cr-ink);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.credits__rewind:hover {
+  border-color: var(--cr-ink);
+}
+
+.credits__socials a:focus-visible,
+.credits__rewind:focus-visible {
+  outline: 2px solid var(--cr-ink);
+  outline-offset: 3px;
+}
